@@ -18,6 +18,7 @@ variables:
 
   # Environment name
   environmentName: 'pythonAppniyi'
+  devEnvironment: 'Dev_Environment'
 
   # Project root folder. Point to the folder containing manage.py file.
   projectRoot: $(System.DefaultWorkingDirectory)
@@ -85,3 +86,31 @@ stages:
               azureSubscription: $(azureServiceConnectionId)
               appName: $(webAppName)
               package: $(Pipeline.Workspace)/drop/$(Build.BuildId).zip
+
+- stage: DeployToTest
+  displayName: 'Deploy Web App To Test'
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+  - deployment: DeploymentJob
+    pool:
+      vmImage: $(vmImageName)
+    environment: $(devEnvironment)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '$(pythonVersion)'
+            displayName: 'Use Python version'
+          
+          - task: AzureRmWebAppDeployment@4
+            inputs:
+              ConnectionType: 'AzureRM'
+              azureSubscription: 'Azure subscription 1 (d648aa9a-54a3-45f5-80bc-246700d9ba81)'
+              appType: 'webAppLinux'
+              WebAppName: 'pythonTestniyi'
+              packageForLinux: '$(System.DefaultWorkingDirectory)/**/*.zip'
+              RuntimeStack: 'PYTHON|3.7'
