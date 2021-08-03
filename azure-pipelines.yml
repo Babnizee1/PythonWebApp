@@ -90,7 +90,7 @@ stages:
 
 - stage: DeployToTest
   displayName: 'Deploy Web App To Test'
-  dependsOn: Build
+  dependsOn: Deploy
   condition: succeeded()
   jobs:
   - deployment: DeploymentTest
@@ -118,7 +118,7 @@ stages:
 
 - stage: DeployToProd
   displayName: 'Deploy Web App To Prod'
-  dependsOn: Build
+  dependsOn: DeployToTest
   condition: succeeded()
   jobs:
   - deployment: DeploymentProd
