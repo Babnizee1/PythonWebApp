@@ -19,6 +19,7 @@ variables:
   # Environment name
   environmentName: 'pythonAppniyi'
   devEnvironment: 'Dev_Environment'
+  ProdEnvironment: 'Prod_Environment'
 
   # Project root folder. Point to the folder containing manage.py file.
   projectRoot: $(System.DefaultWorkingDirectory)
@@ -89,10 +90,10 @@ stages:
 
 - stage: DeployToTest
   displayName: 'Deploy Web App To Test'
-  dependsOn: Build
+  dependsOn: Deploy
   condition: succeeded()
   jobs:
-  - deployment: DeploymentJob
+  - deployment: DeploymentTest
     pool:
       vmImage: $(vmImageName)
     environment: $(devEnvironment)
@@ -112,5 +113,40 @@ stages:
               azureSubscription: 'Azure subscription 1 (d648aa9a-54a3-45f5-80bc-246700d9ba81)'
               appType: 'webAppLinux'
               WebAppName: 'pythonTestniyi'
-              packageForLinux: '$(System.DefaultWorkingDirectory)/**/*.zip'
+              packageForLinux: $(Pipeline.Workspace)/drop/$(Build.BuildId).zip
               RuntimeStack: 'PYTHON|3.7'
+
+- stage: DeployToProd
+  displayName: 'Deploy Web App To Prod'
+  dependsOn: DeployToTest
+  condition: succeeded()
+  jobs:
+  - deployment: DeploymentProd
+    pool:
+      vmImage: $(vmImageName)
+    environment: $(ProdEnvironment)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '$(pythonVersion)'
+            displayName: 'Use Python version'
+          
+          - task: AzureRmWebAppDeployment@4
+            inputs:
+              ConnectionType: 'AzureRM'
+              azureSubscription: 'Azure subscription 1 (d648aa9a-54a3-45f5-80bc-246700d9ba81)'
+              appType: 'webAppLinux'
+              WebAppName: 'prodpythonniyi'
+              packageForLinux: $(Pipeline.Workspace)/drop/$(Build.BuildId).zip
+              RuntimeStack: 'PYTHON|3.7'
+          - task: AzureAppServiceManage@0
+            inputs:
+              azureSubscription: 'Azure subscription 1 (d648aa9a-54a3-45f5-80bc-246700d9ba81)'
+              Action: 'Swap Slots'
+              WebAppName: 'prodpythonniyi'
+              ResourceGroupName: 'niyiresourcegroup'
+              SourceSlot: 'prosperity'
