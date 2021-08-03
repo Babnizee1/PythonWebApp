@@ -134,14 +134,19 @@ stages:
             inputs:
               versionSpec: '$(pythonVersion)'
             displayName: 'Use Python version'
+          
           - task: AzureRmWebAppDeployment@4
             inputs:
               ConnectionType: 'AzureRM'
               azureSubscription: 'Azure subscription 1 (d648aa9a-54a3-45f5-80bc-246700d9ba81)'
               appType: 'webAppLinux'
               WebAppName: 'prodpythonniyi'
-              deployToSlotOrASE: true
-              ResourceGroupName: 'niyiresourcegroup'
-              SlotName: 'prosperity'
-              packageForLinux: '$(Pipeline.Workspace)/drop/$(Build.BuildId).zip'
+              packageForLinux: $(Pipeline.Workspace)/drop/$(Build.BuildId).zip
               RuntimeStack: 'PYTHON|3.7'
+          - task: AzureAppServiceManage@0
+            inputs:
+              azureSubscription: 'Azure subscription 1 (d648aa9a-54a3-45f5-80bc-246700d9ba81)'
+              Action: 'Swap Slots'
+              WebAppName: 'prodpythonniyi'
+              ResourceGroupName: 'niyiresourcegroup'
+              SourceSlot: 'prosperity'
